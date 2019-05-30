@@ -1,0 +1,121 @@
+Title: "Exploratory Data Analysis W1"
+author: Sin Nady
+output: html_document
+---
+Loading the required packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r results='hide', message=FALSE, warning=FALSE}
+library(ggplot2)
+library(lawstat)
+library(MASS)
+library(reshape2)
+```
+
+# Question 1
+__Plot which I liked:__
+I really liked the plots used in [this](https://www.nytimes.com/interactive/2014/08/13/upshot/where-people-in-each-state-were-born.html) interactive visualization.
+Following is the snippet of one of the charts:
+![Good Plot](good_plot.png)
+
+The visualization explains where residents of California state have emigrated to since 1900. They have used stacked bars, but they are always arranged in ascending order for every year. Eg. In 1960, more people emigrated to the states in South than to states in Midwest. This wasn't true before 1960 and this can be easily made out from the plot. For usual stacked bars, it becomes difficult to compare the height of different blocks within same bar. The idea of reordering the blocks solves that problem.
+
+__Plot which I disliked:__
+![Bad Plot](bad_plot.jpg)
+
+The plot visualizes data from an RPG game. It shows the number of kills made using different weapons and in different game stages. Although the plot makes an attempt to visualize a lot of things in the same plot, it fails to do any of it appropriately. The number of weapons is too high to list the weapon names on the axis. It is also very difficult to understand which weapon led to more kills in a specific stage because the data is visualized at an angle and not flat on the surface. It would have been more sensible to make four different plots for each stage. The circles on second and third stage mix up and make it difficult to understand which circles belong to which stage.
+
+# Question 2:
+### __Part 1a__ 
+Draw a histogram, a box plot, and a density estimate of the data. What information can you get from each plot?
+```{r}
+hist(galaxies,xlab="Velocities", main="Histogram of planet velocities",breaks=30)
+boxplot(galaxies,main="Box Plot of Planet Velocities", ylab="Velocities")
+plot(density(galaxies,bw=500),main = "Density of planet Velocities", xlab = "Planet velocities", ylab = "Density",type="l")
+```
+
+__We get the following information from the three plots:__  
+__Histogram__: We can understand how the velocities are distributed over a range. 
+We can clearly see that majority of the data is in the range of 18000 to 25000. 
+We can also see some bi-modality with two distinct peaks at 20000 and at 22500. 
+There are also many outliers in the data as can be seen from the bars on either end of the plot.
+
+__Boxplot__: We can find various metrics related to the data like percentiles, median and inter-quartile range. 
+We can also see from the thin second quartile that the data is skewed towards lower velocities. 
+We also see the outliers in the data and their respective velocities.
+
+__Denisty Estimate__: Density estimate tells us the likelihood of each value on X-axis. 
+As we can clearly see that the density estimate looks similar to histogram and gives similar information. 
+We can see two small peaks on either end, signifying presence of outliers in the data. 
+We can also see large two peaks at the center signifying bimodality in the data.
+
+### __Part 1b:__ 
+Experiment with different binwidths for the histogram and different bandwidths for the density estimates. Which choices do you think are best for conveying the information in the data?  
+
+```{r}
+#Values tried for breaks: 5, 10, 15, 20, 25, 30. Ideal value is 20
+hist(galaxies,xlab="Velocities", main="Histogram of planet velocities",breaks = 20)
+#Values tried for bw: 500, 700,900,1000, 1200, 1500. Ideal value is 700
+plot(density(galaxies,bw=700))  
+```
+
+I tried various values for the number of bins(5, 10, 15, 20, 25, 30) in histogram and bandwidth(500, 700,900,1000, 1200, 1500) for density estimate. For __histogram__, __20 bins__ seems like an ideal value because for values lower than that, the structure of data is not evident. For values higher than 20, the structure looks similar to that with 20 bins, but with lower counts in each bin. I used number of bins instead of binwidth, because both can be used interchangeably and I am more comfortable with number of bins.
+For __denisty estimate__, __bandwidth of 700__ seems ideal because we can clearly see various peaks in the data. For lower values, the plot looks too irregular with too many peaks. For higher values, the density estimate is smoothened out and the peaks are not clearly visible.
+
+### __Part 3__  
+ 
+```{r}
+#Part 3a
+ggplot(data=survey[is.na(survey$Height)==FALSE,],aes(Height))+geom_histogram(aes(y=..density..),binwidth=2,fill="grey",color="black")+geom_density(fill="red",bw=2,alpha=0.2)
+#Part 3b Tried values of 1,2,3,4,5 for histogram binwidth and values of 1,2,3,4,5 for denisty estimate bandwidth. Ideal values are 2 for both. The plots are the same as the plots of part a.
+#Part 3c
+ggplot(survey[is.na(survey$Sex)==FALSE,],aes(x=Height,fill=Sex)) +geom_density(na.rm=TRUE,alpha=0.4,bw=2) + ggtitle("Height comparison for Sex")
+```
+
+__Part a__: There is a evidence of bimodality since we can clearly see two peaks in the density estimate.  
+__Part b__: For histogram, binwidth of 2 is ideal. For lower values, the data is too sparse to show any pattern. For higher values, the histogram loses the granularity and doesn't show the peaks in data. For density estimate, 2 is the ideal bandwidth as well. For lower values, the estimate are erratic and for higher values, they are too smoothened out. The plots with these ideal values can be seen in the part a.  
+
+### __Part 5__:  
+__Part a__: The highest 5% values are extreme whereas the lowest 5% are not extreme. Both, histogram and box plot show these outliers. I prefer the box plot because it clearly shows these outliers.  
+```{r}
+#Part 5a
+data(zuni)
+ggplot(data=zuni)+geom_histogram(aes(Revenue),color="black")
+ggplot()+geom_boxplot(data=zuni,aes(y=Revenue,x=1))
+```
+
+__Part 5b__: The distribution after removing outliers is not symmetric. We can clearly see in the density estimate that it is skewed towards left.  
+```{r}
+#Part 5b
+zuni1<-zuni[zuni$Revenue>=quantile(zuni$Revenue, c(.05)) & zuni$Revenue<=quantile(zuni$Revenue, c(.95)),]
+ggplot(data=zuni1)+geom_density(aes(Revenue))+ggtitle("Density estimate after removing outliers")
+```
+
+__Part c__: The data after removing outliers is not normal as it doesn't align along the 45 degree line.
+```{r}
+#Part 5c
+ggplot()+geom_qq(data=zuni1,aes(sample=Revenue))
+```
+
+# Question 3
+```{r}
+painters1=painters
+painters1$Name=row.names(painters)
+painters1$Total=painters1$Composition+painters1$Drawing+painters$Colour+painters$Expression
+painters1 <- painters1[order(painters1$Total),]
+for (i in 1:length(painters1$Name)){
+  if (i<10){
+    painters1$Name[i]=paste("0",i,painters1$Name[i],sep="")
+  } else{
+    painters1$Name[i]=paste(i,painters1$Name[i],sep="")
+  }
+}
+painters1$Total<-NULL
+painters1_melt <- melt(painters1, id=c("Name","School"))
+#plot 1
+ggplot(data=painters1_melt,aes(x=Name,y=value,fill=variable))+geom_bar(stat="identity")+coord_flip()+theme(text = element_text(size=8))
+#plot 2
+ggplot(data=painters1_melt,aes(value,color=variable))+geom_density(alpha=0.5,bw=2)
+#plot 3
+ggplot(data=painters1_melt,aes(x=1,y=value,fill=variable))+geom_boxplot()
